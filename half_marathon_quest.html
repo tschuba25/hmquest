@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0c29">
+<title>Half Marathon Quest</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #0f0c29 0%, #1a1a3e 50%, #24243e 100%); color: #fff; min-height: 100vh; min-height: 100dvh; padding-bottom: 40px; }
+  button { font-family: inherit; }
+
+  .header { padding: 24px 20px 16px; text-align: center; }
+  .header h1 { font-size: 28px; font-weight: 800; letter-spacing: 2px; background: linear-gradient(90deg, #FF6B6B, #FFE66D, #4ECDC4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .header .sub { color: #888; margin-top: 4px; font-size: 14px; }
+
+  .stats-bar { margin: 0 16px 16px; background: rgba(255,255,255,0.06); border-radius: 16px; padding: 16px; border: 1px solid rgba(255,255,255,0.1); }
+  .stats-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .level-info { display: flex; align-items: center; gap: 8px; }
+  .level-icon { font-size: 28px; }
+  .level-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+  .level-name { font-weight: 700; font-size: 16px; }
+  .xp-display { text-align: right; }
+  .xp-label { font-size: 11px; color: #888; }
+  .xp-value { font-weight: 800; font-size: 22px; color: #FFD700; }
+  .xp-max { font-size: 12px; color: #666; }
+
+  .progress-section { margin-top: 4px; }
+  .progress-labels { display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-bottom: 4px; }
+  .progress-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; background: linear-gradient(90deg, #FFD700, #FFA000); }
+
+  .mini-stats { display: flex; justify-content: space-around; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .mini-stat { text-align: center; }
+  .mini-stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .mini-stat-value { font-weight: 700; font-size: 16px; }
+
+  .ach-btn { width: 100%; padding: 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; color: #FFD700; font-weight: 600; font-size: 14px; cursor: pointer; margin: 0 16px 12px; width: calc(100% - 32px); }
+  .ach-btn.open { background: rgba(255,215,0,0.15); }
+  .ach-grid { margin: 8px 16px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ach-item { padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.03); opacity: 0.4; transition: all 0.2s; }
+  .ach-item.unlocked { background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.3); opacity: 1; }
+  .ach-icon { font-size: 20px; }
+  .ach-name { font-size: 12px; font-weight: 700; margin-top: 2px; }
+  .ach-desc { font-size: 10px; color: #888; margin-top: 1px; }
+
+  .week-tabs { display: flex; gap: 6px; margin: 0 16px 12px; overflow: auto; }
+  .week-tab { flex: 1; min-width: 75px; padding: 8px 4px; border-radius: 10px; cursor: pointer; border: none; color: #888; font-weight: 700; font-size: 12px; position: relative; overflow: hidden; background: rgba(255,255,255,0.06); }
+  .week-tab.active { color: #fff; }
+  .week-tab .check { position: absolute; top: 2px; right: 4px; font-size: 10px; }
+  .week-tab-bar { height: 3px; background: rgba(0,0,0,0.3); border-radius: 2px; margin-top: 4px; }
+  .week-tab-fill { height: 100%; background: #fff; border-radius: 2px; transition: width 0.3s; }
+
+  .week-content { margin: 0 16px 24px; }
+  .week-header h2 { font-size: 20px; font-weight: 800; }
+  .week-subtitle { color: #888; font-size: 13px; margin-top: 2px; }
+  .week-xp { font-size: 12px; margin-top: 4px; font-weight: 600; }
+  .sessions { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+
+  .session { border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); transition: all 0.2s; }
+  .session.done { background: rgba(76, 175, 80, 0.12); }
+  .session.boss { border-width: 2px; }
+  .boss-label { padding: 2px 12px; font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #fff; text-transform: uppercase; }
+  .session-row { display: flex; align-items: center; padding: 12px; gap: 12px; }
+  .check-btn { width: 36px; height: 36px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.2); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; flex-shrink: 0; transition: all 0.2s; }
+  .check-btn.checked { background: #4CAF50; border-color: #4CAF50; }
+  .session-info { flex: 1; min-width: 0; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .session-icon { font-size: 18px; }
+  .session-name { font-weight: 700; font-size: 14px; }
+  .session-name.done { color: #4CAF50; text-decoration: line-through; }
+  .xp-badge { padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+  .xp-badge.pending { background: rgba(255,215,0,0.1); color: #FFD700; }
+  .xp-badge.earned { background: rgba(76,175,80,0.2); color: #4CAF50; }
+  .session-details { padding: 0 12px 12px; font-size: 13px; color: #bbb; line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; }
+  .session-details div { margin-bottom: 4px; }
+
+  .week-reward { margin-top: 12px; padding: 16px; border-radius: 14px; text-align: center; }
+  .week-reward-icon { font-size: 32px; }
+  .week-reward-text { font-weight: 800; font-size: 16px; margin-top: 4px; }
+
+  .race-card { margin: 0 16px 16px; padding: 20px; border-radius: 16px; text-align: center; background: linear-gradient(135deg, #C6282822, #9C27B022); border: 1px solid rgba(255,255,255,0.1); }
+  .race-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 2px; }
+  .race-time { font-size: 42px; font-weight: 900; margin-top: 8px; background: linear-gradient(90deg, #FF6B6B, #FFE66D); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .race-splits { color: #888; margin-top: 4px; font-size: 12px; }
+  .race-status { margin-top: 12px; font-size: 14px; font-weight: 600; }
+
+  .footer { text-align: center; padding: 0 16px; }
+  .footer-hint { color: #444; font-size: 12px; margin-bottom: 8px; }
+  .reset-btn { background: none; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #555; font-size: 11px; padding: 6px 16px; cursor: pointer; }
+  .reset-confirm { display: flex; gap: 8px; justify-content: center; }
+  .reset-yes { background: rgba(244,67,54,0.2); border: 1px solid #F44336; border-radius: 8px; color: #F44336; font-size: 12px; padding: 6px 20px; cursor: pointer; font-weight: 600; }
+  .reset-no { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #888; font-size: 12px; padding: 6px 20px; cursor: pointer; }
+
+  .popup { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; background: linear-gradient(135deg, #FFD700, #FFA000); color: #1a1a2e; padding: 16px 32px; border-radius: 16px; box-shadow: 0 8px 32px rgba(255,215,0,0.4); display: flex; align-items: center; gap: 12px; font-weight: bold; font-size: 18px; animation: popIn 0.3s ease-out; }
+  .popup-icon { font-size: 32px; }
+  .popup-label { font-size: 12px; opacity: 0.8; }
+  .popup-desc { font-size: 11px; font-weight: 400; opacity: 0.7; }
+
+  @keyframes popIn { from { transform: translateX(-50%) translateY(-20px) scale(0.9); opacity: 0; } to { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; } }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div id="achievement-popup" class="popup hidden">
+  <span id="popup-icon" class="popup-icon"></span>
+  <div>
+    <div class="popup-label">ACHIEVEMENT UNLOCKED</div>
+    <div id="popup-name"></div>
+    <div id="popup-desc" class="popup-desc"></div>
+  </div>
+</div>
+
+<div class="header">
+  <h1>HALF MARATHON QUEST</h1>
+  <div class="sub">Sub 1:25 | 4 Weeks | No Mercy</div>
+</div>
+
+<div class="stats-bar">
+  <div class="stats-top">
+    <div class="level-info">
+      <span id="level-icon" class="level-icon"></span>
+      <div>
+        <div class="level-label">Level</div>
+        <div id="level-name" class="level-name"></div>
+      </div>
+    </div>
+    <div class="xp-display">
+      <div class="xp-label">TOTAL XP</div>
+      <div><span id="xp-value" class="xp-value"></span><span id="xp-max" class="xp-max"></span></div>
+    </div>
+  </div>
+  <div id="progress-section" class="progress-section">
+    <div class="progress-labels">
+      <span id="next-level-label"></span>
+      <span id="next-level-xp"></span>
+    </div>
+    <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+  </div>
+  <div class="mini-stats">
+    <div class="mini-stat"><div class="mini-stat-label">Sessions</div><div id="stat-sessions" class="mini-stat-value" style="color:#4ECDC4"></div></div>
+    <div class="mini-stat"><div class="mini-stat-label">Streak</div><div id="stat-streak" class="mini-stat-value" style="color:#FF6B6B"></div></div>
+    <div class="mini-stat"><div class="mini-stat-label">Bosses</div><div id="stat-bosses" class="mini-stat-value" style="color:#9B59B6"></div></div>
+    <div class="mini-stat"><div class="mini-stat-label">Badges</div><div id="stat-badges" class="mini-stat-value" style="color:#FFD700"></div></div>
+  </div>
+</div>
+
+<button id="ach-toggle" class="ach-btn" onclick="toggleAchievements()"></button>
+<div id="ach-grid" class="ach-grid hidden"></div>
+
+<div id="week-tabs" class="week-tabs"></div>
+<div id="week-content" class="week-content"></div>
+
+<div class="race-card">
+  <div class="race-label">Race Day Target</div>
+  <div class="race-time">1:25:00</div>
+  <div class="race-splits">KM1-5: 4:06 → KM6-10: 4:01 → KM11-15: 3:59 → KM16-18: 3:54 → KM19-21: 3:50</div>
+  <div id="race-status" class="race-status"></div>
+</div>
+
+<div class="footer">
+  <div class="footer-hint">Tap sessions to expand • Check off when done</div>
+  <div id="reset-area"></div>
+</div>
+
+<script>
+const WEEKS = [
+  { id:1, title:"WEEK 1: IGNITION", subtitle:"Establish rhythm, lock in race pace", color:"#2196F3",
+    days:[
+      {day:"Mon",type:"STRENGTH + EASY",icon:"💪",xp:30,details:["AM: Strength 40min (3 rounds: split squats, box jumps, calf raises, planks, Nordics)","PM: Easy 30min @ 5:00/km"],category:"strength"},
+      {day:"Tue",type:"HILLS",icon:"⛰️",xp:50,details:["8x 90s hill HARD","Jog down recovery. WU/CD 15min each","Total ~70min. HR 90%+ on reps 5-8"],category:"hills"},
+      {day:"Wed",type:"BRICK",icon:"🚴→🏃",xp:50,details:["40min bike Zone 3","→ 30min run @ 3:58-4:02/km negative split","First 15min @ 4:02, last 15min @ 3:58"],category:"brick"},
+      {day:"Thu",type:"TRACK",icon:"🏟️",xp:55,details:["6x1000m @ 3:35-3:40/km","75s jog recovery","Splits within 3s of each other. Total ~65min"],category:"track"},
+      {day:"Fri",type:"EASY + CORE",icon:"🧘",xp:20,details:["AM: Easy 35min @ 5:00/km + 6 strides","PM: Core 20min (planks, hip work)"],category:"easy"},
+      {day:"Sat",type:"EASY/CROSS",icon:"🏊",xp:20,details:["Easy 40min @ 4:50/km OR swim 45min","Active recovery"],category:"easy"},
+      {day:"Sun",type:"LONG RUN",icon:"🔥",xp:60,details:["16km progressive: 2km easy","→ 12km (4:10→4:05→4:00→3:55/km last 2km)","→ 2km easy. Gel at KM 6"],category:"long",boss:true}
+    ]},
+  { id:2, title:"WEEK 2: ESCALATION", subtitle:"More volume, more speed, less mercy", color:"#FF9800",
+    days:[
+      {day:"Mon",type:"STRENGTH + EASY",icon:"💪",xp:35,details:["AM: Strength 45min (4 rounds + single-leg deadlifts)","PM: Easy 35min @ 4:50/km"],category:"strength"},
+      {day:"Tue",type:"HILLS DOUBLE",icon:"⛰️⛰️",xp:60,details:["5x 2min hill HARD","+ 4x 30s SPRINT hill","Long = lactate tolerance. Sprint = raw power"],category:"hills"},
+      {day:"Wed",type:"BRICK EXTENDED",icon:"🚴→🏃",xp:55,details:["35min bike hard","→ 35min run: 25min @ 3:58-4:00/km","+ last 10min @ 3:53-3:55/km","OR race 13K @ 4:00/km"],category:"brick"},
+      {day:"Thu",type:"TRACK PYRAMID",icon:"🏟️🏟️",xp:65,details:["8x600m @ 3:25-3:30/km (60s rest)","+ 4x400m @ 3:15-3:20/km (60s rest)","Total hard: 6.4km"],category:"track"},
+      {day:"Fri",type:"EASY + CORE",icon:"🧘",xp:20,details:["AM: Easy 35min + 8 strides","PM: Core + hip 30min"],category:"easy"},
+      {day:"Sat",type:"EASY STEADY",icon:"🏃",xp:25,details:["Easy 45min @ 4:45/km steady","OR hard swim"],category:"easy"},
+      {day:"Sun",type:"LONG PROGRESSIVE",icon:"🔥🔥",xp:70,details:["18km: 2km easy","→ 14km progressive","4:10→4:05→3:58→3:52/km last 4km","Last 4km = sub-race-pace"],category:"long",boss:true}
+    ]},
+  { id:3, title:"WEEK 3: PEAK", subtitle:"Maximum overload. Embrace the suffering.", color:"#F44336",
+    days:[
+      {day:"Mon",type:"STRENGTH PEAK",icon:"💪🔥",xp:40,details:["AM: Peak strength 50min","4 rounds heavy + pistol squats + wall sit","PM: Easy 30min @ 5:00/km"],category:"strength"},
+      {day:"Tue",type:"HILLS PEAK",icon:"⛰️🔥",xp:65,details:["6x 2min hill HARD","+ 3x 30s sprint hill","15 min total climbing. Hardest hill session."],category:"hills"},
+      {day:"Wed",type:"BRICK KEY SESSION",icon:"🔑",xp:75,details:["35min bike HARD","→ 40min run: 10min@4:02 → 15min@3:58","→ 15min@3:52-3:55/km","THE MOST IMPORTANT SESSION"],category:"brick",boss:true},
+      {day:"Thu",type:"TRACK TRIPLE-SET",icon:"🏟️🔥",xp:70,details:["3 sets: (1K@3:37 + 600m@3:27 + 400m@3:17)","75s/60s/3min rest","9 efforts, 6.0km hard"],category:"track"},
+      {day:"Fri",type:"EASY RECOVERY",icon:"🧘",xp:15,details:["AM: Easy 30min + 6 strides","PM: Core 20min","SLEEP 9 HOURS"],category:"easy"},
+      {day:"Sat",type:"FULL REST",icon:"😴",xp:10,details:["Full rest. No cross-training","Foam roll. Sleep 9 hours"],category:"rest"},
+      {day:"Sun",type:"20K DRESS REHEARSAL",icon:"🔥🔥🔥",xp:85,details:["20km: 2km easy","→ 16km progressive","4:10→4:03→3:58→3:52/km last 5km","Race shoes, race kit, race fuel"],category:"long",boss:true}
+    ]},
+  { id:4, title:"WEEK 4: TAPER & DESTROY", subtitle:"Cut volume. Keep intensity. Arrive lethal.", color:"#9C27B0",
+    days:[
+      {day:"Mon",type:"STRENGTH LITE",icon:"💪",xp:15,details:["AM: Maintenance 25min bodyweight (2 rounds)","PM: Easy 25min @ 5:00/km"],category:"strength"},
+      {day:"Tue",type:"HILLS ACTIVATION",icon:"⛰️",xp:25,details:["4x 60s hill @ 85% effort","Activation only. Finish sharp. Total ~40min"],category:"hills"},
+      {day:"Wed",type:"EASY STRIDES",icon:"🏃",xp:15,details:["30min easy @ 4:50/km","+ 6x100m strides"],category:"easy"},
+      {day:"Thu",type:"FINAL SHARPENER",icon:"⚡",xp:40,details:["3x1K @ 3:35-3:37/km (2min rest)","+ 2x400m @ 3:15-3:18/km","Short, violent, done"],category:"track"},
+      {day:"Fri",type:"REST",icon:"😴",xp:10,details:["Full rest. Prep gear","Hydrate. Visualize entire race"],category:"rest"},
+      {day:"Sat",type:"SHAKEOUT",icon:"✨",xp:10,details:["15min very easy + 4 strides","Lay out race kit. Early to bed"],category:"easy"},
+      {day:"Sun",type:"🏁 RACE DAY",icon:"🏁",xp:100,details:["HALF MARATHON — Sub 1:25","KM1-5: 4:06 (patience)","KM6-10: 4:01 (lock in)","KM11-15: 3:59 (hunt)","KM16-18: 3:54 (crucible)","KM19-21.1: 3:50 (destroy)","Sprint last 200m"],category:"race",boss:true}
+    ]}
+];
+
+const ACHIEVEMENTS = [
+  {id:"first_session",name:"First Blood",icon:"🗡️",desc:"Complete your first session",check:s=>s.total>=1},
+  {id:"three_streak",name:"On Fire",icon:"🔥",desc:"3-day streak",check:s=>s.streak>=3},
+  {id:"five_streak",name:"Unstoppable",icon:"⚡",desc:"5-day streak",check:s=>s.streak>=5},
+  {id:"week1",name:"Week 1 Cleared",icon:"✅",desc:"Complete all Week 1 sessions",check:s=>s.weekComplete[0]},
+  {id:"week2",name:"Week 2 Cleared",icon:"✅✅",desc:"Complete all Week 2 sessions",check:s=>s.weekComplete[1]},
+  {id:"week3",name:"Peak Survivor",icon:"🏔️",desc:"Survive Week 3",check:s=>s.weekComplete[2]},
+  {id:"all_hills",name:"Mountain Goat",icon:"🐐",desc:"All hill sessions",check:s=>s.categories.hills>=4},
+  {id:"all_track",name:"Speed Demon",icon:"👹",desc:"All track sessions",check:s=>s.categories.track>=4},
+  {id:"all_long",name:"Iron Legs",icon:"🦿",desc:"All long runs",check:s=>s.categories.long>=4},
+  {id:"all_brick",name:"Hybrid Machine",icon:"🤖",desc:"All brick sessions",check:s=>s.categories.brick>=4},
+  {id:"boss_killer",name:"Boss Killer",icon:"💀",desc:"All boss sessions",check:s=>s.bossKills>=6},
+  {id:"xp200",name:"XP Hunter",icon:"💎",desc:"Earn 200 XP",check:s=>s.xp>=200},
+  {id:"xp500",name:"XP Hoarder",icon:"💰",desc:"Earn 500 XP",check:s=>s.xp>=500},
+  {id:"xp800",name:"XP Legend",icon:"👑",desc:"Earn 800 XP",check:s=>s.xp>=800},
+  {id:"finisher",name:"RACE FINISHER",icon:"🏆",desc:"Cross the finish line",check:s=>s.raceComplete},
+  {id:"perfectionist",name:"PERFECT BLOCK",icon:"🌟",desc:"Every single session",check:s=>s.total>=28}
+];
+
+const LEVELS = [
+  {name:"Couch Potato",minXP:0,icon:"🥔"},{name:"Jogger",minXP:50,icon:"🏃"},
+  {name:"Runner",minXP:150,icon:"🏃‍♂️"},{name:"Athlete",minXP:300,icon:"💪"},
+  {name:"Competitor",minXP:500,icon:"⚔️"},{name:"Warrior",minXP:700,icon:"🗡️"},
+  {name:"Race Machine",minXP:900,icon:"🤖"},{name:"LEGEND",minXP:1100,icon:"👑"}
+];
+
+let completed = {};
+let seenAchievements = {};
+let activeWeek = 0;
+let expandedSession = null;
+let achOpen = false;
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem('hm-quest') || '{}');
+    if (d.completed) completed = d.completed;
+    if (d.seenAchievements) seenAchievements = d.seenAchievements;
+  } catch(e) {}
+}
+
+function save() {
+  localStorage.setItem('hm-quest', JSON.stringify({ completed, seenAchievements }));
+}
+
+function getLevel(xp) { let l = LEVELS[0]; for (const v of LEVELS) if (xp >= v.minXP) l = v; return l; }
+function getNextLevel(xp) { for (const v of LEVELS) if (xp < v.minXP) return v; return null; }
+
+function getStats() {
+  let xp=0, total=0, bossKills=0, raceComplete=false;
+  const categories = {hills:0,track:0,long:0,brick:0,strength:0,easy:0,rest:0,race:0};
+  const weekComplete = [true,true,true,true];
+  const days = [];
+  WEEKS.forEach((w,wi) => w.days.forEach((d,di) => {
+    const k = `${wi}-${di}`;
+    if (completed[k]) { xp+=d.xp; total++; categories[d.category]=(categories[d.category]||0)+1; if(d.boss)bossKills++; if(d.category==="race")raceComplete=true; days.push(wi*7+di); }
+    else weekComplete[wi]=false;
+  }));
+  let streak=0; const sorted=[...days].sort((a,b)=>b-a);
+  if(sorted.length>0){streak=1;for(let i=1;i<sorted.length;i++){if(sorted[i-1]-sorted[i]===1)streak++;else break;}}
+  return {xp,total,streak,weekComplete,categories,bossKills,raceComplete};
+}
+
+const maxXP = WEEKS.reduce((s,w)=>s+w.days.reduce((a,d)=>a+d.xp,0),0);
+
+function showPopup(ach) {
+  const el = document.getElementById('achievement-popup');
+  document.getElementById('popup-icon').textContent = ach.icon;
+  document.getElementById('popup-name').textContent = ach.name;
+  document.getElementById('popup-desc').textContent = ach.desc;
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 3500);
+}
+
+function checkAchievements(stats) {
+  for (const a of ACHIEVEMENTS) {
+    if (a.check(stats) && !seenAchievements[a.id]) {
+      seenAchievements[a.id] = true;
+      showPopup(a);
+      save();
+      return;
+    }
+  }
+}
+
+function toggle(wi, di) {
+  const k = `${wi}-${di}`;
+  if (completed[k]) delete completed[k]; else completed[k] = true;
+  save();
+  const stats = getStats();
+  checkAchievements(stats);
+  render();
+}
+
+function setWeek(wi) { activeWeek = wi; expandedSession = null; render(); }
+function toggleDetails(key) { expandedSession = expandedSession === key ? null : key; render(); }
+function toggleAchievements() { achOpen = !achOpen; render(); }
+
+function weekProgress(wi) { return WEEKS[wi].days.filter((_,di)=>completed[`${wi}-${di}`]).length / WEEKS[wi].days.length; }
+function weekXP(wi) { return WEEKS[wi].days.reduce((s,d,di)=>s+(completed[`${wi}-${di}`]?d.xp:0),0); }
+function weekMaxXP(wi) { return WEEKS[wi].days.reduce((s,d)=>s+d.xp,0); }
+
+function render() {
+  const stats = getStats();
+  const level = getLevel(stats.xp);
+  const next = getNextLevel(stats.xp);
+
+  document.getElementById('level-icon').textContent = level.icon;
+  document.getElementById('level-name').textContent = level.name;
+  document.getElementById('xp-value').textContent = stats.xp;
+  document.getElementById('xp-max').textContent = `/${maxXP}`;
+
+  if (next) {
+    document.getElementById('progress-section').classList.remove('hidden');
+    document.getElementById('next-level-label').textContent = `Next: ${next.icon} ${next.name}`;
+    document.getElementById('next-level-xp').textContent = `${next.minXP - stats.xp} XP to go`;
+    document.getElementById('progress-fill').style.width = `${Math.min(100,((stats.xp-level.minXP)/(next.minXP-level.minXP))*100)}%`;
+  } else {
+    document.getElementById('progress-section').classList.add('hidden');
+  }
+
+  document.getElementById('stat-sessions').textContent = `${stats.total}/28`;
+  document.getElementById('stat-streak').textContent = `${stats.streak}🔥`;
+  document.getElementById('stat-bosses').textContent = `${stats.bossKills}/6`;
+  const unlocked = ACHIEVEMENTS.filter(a=>a.check(stats));
+  document.getElementById('stat-badges').textContent = `${unlocked.length}/${ACHIEVEMENTS.length}`;
+
+  // Achievements
+  const achBtn = document.getElementById('ach-toggle');
+  achBtn.textContent = `${achOpen?'▼':'▶'} Achievements (${unlocked.length}/${ACHIEVEMENTS.length})`;
+  achBtn.className = `ach-btn${achOpen?' open':''}`;
+  const achGrid = document.getElementById('ach-grid');
+  achGrid.className = `ach-grid${achOpen?'':' hidden'}`;
+  if (achOpen) {
+    achGrid.innerHTML = ACHIEVEMENTS.map(a => {
+      const u = a.check(stats);
+      return `<div class="ach-item${u?' unlocked':''}"><div class="ach-icon">${u?a.icon:'🔒'}</div><div class="ach-name">${a.name}</div><div class="ach-desc">${a.desc}</div></div>`;
+    }).join('');
+  }
+
+  // Week tabs
+  document.getElementById('week-tabs').innerHTML = WEEKS.map((w,wi) => {
+    const p = weekProgress(wi);
+    return `<button class="week-tab${activeWeek===wi?' active':''}" style="${activeWeek===wi?`background:${w.color}`:''}" onclick="setWeek(${wi})">
+      ${p===1?'<span class="check">✅</span>':''}
+      <div>W${wi+1}</div><div style="font-size:10px;opacity:0.8">${Math.round(p*100)}%</div>
+      <div class="week-tab-bar"><div class="week-tab-fill" style="width:${p*100}%"></div></div>
+    </button>`;
+  }).join('');
+
+  // Week content
+  const w = WEEKS[activeWeek];
+  const wi = activeWeek;
+  let html = `<div class="week-header"><h2 style="color:${w.color}">${w.title}</h2><div class="week-subtitle">${w.subtitle}</div><div class="week-xp" style="color:${w.color}">${weekXP(wi)} / ${weekMaxXP(wi)} XP earned</div></div><div class="sessions">`;
+
+  w.days.forEach((d,di) => {
+    const k = `${wi}-${di}`;
+    const done = !!completed[k];
+    const expanded = expandedSession === k;
+    const boss = d.boss;
+    html += `<div class="session${done?' done':''}${boss?' boss':''}" style="${boss?`border-color:${w.color}`:''}">`;
+    if (boss) html += `<div class="boss-label" style="background:linear-gradient(90deg,${w.color},transparent)">⚔️ Boss Session — Bonus XP</div>`;
+    html += `<div class="session-row">
+      <button class="check-btn${done?' checked':''}" onclick="toggle(${wi},${di})">${done?'✓':''}</button>
+      <div class="session-info" onclick="toggleDetails('${k}')">
+        <span class="session-icon">${d.icon}</span>
+        <span class="session-name${done?' done':''}">${d.day} — ${d.type}</span>
+      </div>
+      <div class="xp-badge ${done?'earned':'pending'}">${done?'✓':'+'} ${d.xp}</div>
+    </div>`;
+    if (expanded) html += `<div class="session-details">${d.details.map(l=>`<div>• ${l}</div>`).join('')}</div>`;
+    html += `</div>`;
+  });
+
+  html += '</div>';
+
+  if (weekProgress(wi) === 1) {
+    const icons = ['🎯','💪','🏔️','🏆'];
+    const msgs = ["WEEK 1 COMPLETE — Engine started.","WEEK 2 COMPLETE — You're dangerous now.","PEAK WEEK SURVIVED — The hard work is done.","RACE COMPLETE — You did it. Legend."];
+    html += `<div class="week-reward" style="background:linear-gradient(135deg,${w.color}22,${w.color}44);border:1px solid ${w.color}66">
+      <div class="week-reward-icon">${icons[wi]}</div>
+      <div class="week-reward-text" style="color:${w.color}">${msgs[wi]}</div>
+    </div>`;
+  }
+
+  document.getElementById('week-content').innerHTML = html;
+
+  // Race status
+  const rs = document.getElementById('race-status');
+  if (stats.raceComplete) { rs.textContent = '🏆 FINISHED. You are a legend.'; rs.style.color = '#FFD700'; }
+  else if (stats.total >= 24) { rs.textContent = '✅ You\'re ready. Go destroy it.'; rs.style.color = '#4CAF50'; }
+  else { rs.textContent = `${28 - stats.total} sessions to race day`; rs.style.color = '#FF6B6B'; }
+
+  // Reset
+  document.getElementById('reset-area').innerHTML = `<button class="reset-btn" onclick="confirmReset()">Reset Progress</button>`;
+}
+
+function confirmReset() {
+  document.getElementById('reset-area').innerHTML = `<div class="reset-confirm">
+    <button class="reset-yes" onclick="doReset()">Yes, reset everything</button>
+    <button class="reset-no" onclick="render()">Cancel</button>
+  </div>`;
+}
+
+function doReset() {
+  completed = {};
+  seenAchievements = {};
+  localStorage.removeItem('hm-quest');
+  render();
+}
+
+load();
+render();
+</script>
+</body>
+</html>
